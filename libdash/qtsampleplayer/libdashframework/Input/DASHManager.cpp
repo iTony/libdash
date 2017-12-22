@@ -107,7 +107,7 @@ void        DASHManager::OnVideoFrameDecoded    (const uint8_t **data, videoFram
 
     avpicture_fill((AVPicture*)rgbframe, buffer, AV_PIX_FMT_RGB24, w, h);
 
-    SwsContext *imgConvertCtx = sws_getContext(props->width, props->height, (AVPixelFormat)props->pxlFmt, w, h, PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
+    SwsContext *imgConvertCtx = sws_getContext(props->width, props->height, (AVPixelFormat)props->pxlFmt, w, h, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
 
     sws_scale(imgConvertCtx, data, props->linesize, 0, h, rgbframe->data, rgbframe->linesize);
 
