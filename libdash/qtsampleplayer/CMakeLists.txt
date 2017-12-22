@@ -29,7 +29,10 @@ set(LIBDASH_LIBRARIES "../build/bin/" CACHE PATH "Path to libdash.so")
 set(LIBDASH_INCLUDES "../libdash/include/" CACHE PATH "Path to libdash includes")
 
 include_directories(${LIBDASH_INCLUDES})
+include_directories("/usr/local/include/")
 link_directories(${LIBDASH_LIBRARIES})
+link_directories("/usr/local/lib/")
+link_directories("/usr/local/opt/libiconv/lib")
 
 file(GLOB qtplayer_SOURCE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} Decoder/*.cpp libdashframework/MPD/*.cpp libdashframework/Adaptation/*.cpp libdashframework/Buffer/*.cpp libdashframework/Input/*.cpp libdashframework/Portable/*.cpp Managers/*.cpp Renderer/*.cpp UI/*.cpp UI/IDASHPlayerGuiObserver.h main.cpp)
 
@@ -43,4 +46,6 @@ add_executable(qtsampleplayer ${qtplayer_SOURCE} ${qtsampleplayer_FORMS_HEADERS}
 qt5_use_modules(qtsampleplayer Core Widgets Multimedia MultimediaWidgets Gui OpenGL)
 
 # For the linker
-target_link_libraries(qtsampleplayer dash ${QT_LIBRARIES} ${LIBAV_LIBRARIES} -lpthread)
+#target_link_libraries(qtsampleplayer dash ${QT_LIBRARIES} ${LIBAV_LIBRARIES} -lpthread)
+target_link_libraries(qtsampleplayer dash bz2 swresample libiconv.a lzma.dylib z ${QT_LIBRARIES} ${LIBAV_LIBRARIES} -lpthread)
+target_link_libraries(qtsampleplayer "-framework AudioToolbox")

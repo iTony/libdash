@@ -1,5 +1,8 @@
 # libdash
 
+# cmake
+cmake -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5/ ../
+
 
 libdash is the **official reference software of the ISO/IEC MPEG-DASH standard** and is an open-source library that provides an object orient (OO) interface to the MPEG-DASH standard, developed by [Bitmovin](http://www.bitmovin.com).
 
