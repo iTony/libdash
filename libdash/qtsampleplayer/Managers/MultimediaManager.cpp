@@ -191,6 +191,7 @@ bool    MultimediaManager::SetAudioAdaptationLogic          (libdash::framework:
     if(this->audioLogic != NULL)
         delete this->audioLogic;
     this->audioLogic = AdaptationLogicFactory::Create(sampleplayer::managers::AUDIO, type, this->mpd, this->period, this->audioAdaptationSet);
+    LeaveCriticalSection(&this->monitorMutex);
     
     return true;
 }

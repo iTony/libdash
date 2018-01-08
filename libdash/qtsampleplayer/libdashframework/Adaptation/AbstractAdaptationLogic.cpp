@@ -38,6 +38,7 @@ AbstractAdaptationLogic::AbstractAdaptationLogic    (StreamType type, dash::mpd:
     }
     this->adaptationSet   = this->AdaptationSets.at(0);
     this->Representations = this->adaptationSet->GetRepresentation();
+    this->representation = this->Representations.at(0);
 }
 AbstractAdaptationLogic::~AbstractAdaptationLogic   ()
 {

@@ -36,4 +36,7 @@ double          AutoAdaptation::EstimateBandwidth      (std::vector<double> &ban
 void            AutoAdaptation::DoLogic                ()
 {
     // add logic here.
+//    this->adaptationSet     = this->AdaptationSets.at(0);
+//    this->Representations   = this->adaptationSet->GetRepresentation();
+//    this->representation    = this->Representations.at(0);
 }
