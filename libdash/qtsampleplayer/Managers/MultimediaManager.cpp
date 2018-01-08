@@ -149,8 +149,10 @@ bool    MultimediaManager::SetVideoQuality                  (IPeriod* period, IA
     this->videoAdaptationSet    = adaptationSet;
     this->videoRepresentation   = representation;
 
-    if (this->videoStream)
+    if (this->videoStream) {
+        this->videoLogic->SetRepresentation(this->period, this->videoAdaptationSet, this->videoRepresentation);
         this->videoStream->SetRepresentation(this->period, this->videoAdaptationSet, this->videoRepresentation);
+    }
 
     LeaveCriticalSection(&this->monitorMutex);
     return true;
@@ -163,20 +165,33 @@ bool    MultimediaManager::SetAudioQuality                  (IPeriod* period, IA
     this->audioAdaptationSet    = adaptationSet;
     this->audioRepresentation   = representation;
 
-    if (this->audioStream)
+    if (this->audioStream) {
+        this->audioLogic->SetRepresentation(this->period, this->audioAdaptationSet, this->audioRepresentation);
         this->audioStream->SetRepresentation(this->period, this->audioAdaptationSet, this->audioRepresentation);
+    }
 
     LeaveCriticalSection(&this->monitorMutex);
     return true;
 }
 bool    MultimediaManager::SetVideoAdaptationLogic          (libdash::framework::adaptation::LogicType type)
 {
-    //Currently unused, always using ManualAdaptation.
+    // if unused currently, always using ManualAdaptation.
+    EnterCriticalSection(&this->monitorMutex);
+    if(this->videoLogic != NULL)
+        delete this->videoLogic;
+    this->videoLogic = AdaptationLogicFactory::Create(sampleplayer::managers::VIDEO, type, this->mpd, this->period, this->videoAdaptationSet);
+    LeaveCriticalSection(&this->monitorMutex);
+
     return true;
 }
 bool    MultimediaManager::SetAudioAdaptationLogic          (libdash::framework::adaptation::LogicType type)
 {
-    //Currently unused, always using ManualAdaptation.
+    // if unused currently, always using ManualAdaptation.
+    EnterCriticalSection(&this->monitorMutex);
+    if(this->audioLogic != NULL)
+        delete this->audioLogic;
+    this->audioLogic = AdaptationLogicFactory::Create(sampleplayer::managers::AUDIO, type, this->mpd, this->period, this->audioAdaptationSet);
+    
     return true;
 }
 void    MultimediaManager::AttachManagerObserver            (IMultimediaManagerObserver *observer)
@@ -205,7 +220,7 @@ void    MultimediaManager::NotifyAudioBufferObservers       (uint32_t fillstateI
 }
 void    MultimediaManager::InitVideoRendering               (uint32_t offset)
 {
-    this->videoLogic = AdaptationLogicFactory::Create(libdash::framework::adaptation::Manual, this->mpd, this->period, this->videoAdaptationSet);
+    this->videoLogic = AdaptationLogicFactory::Create(sampleplayer::managers::VIDEO, libdash::framework::adaptation::Auto, this->mpd, this->period, this->videoAdaptationSet);
 
     this->videoStream = new MultimediaStream(sampleplayer::managers::VIDEO, this->mpd, SEGMENTBUFFER_SIZE, 2, 0);
     this->videoStream->AttachStreamObserver(this);
@@ -214,16 +229,38 @@ void    MultimediaManager::InitVideoRendering               (uint32_t offset)
 }
 void    MultimediaManager::InitAudioPlayback                (uint32_t offset)
 {
-    this->audioLogic = AdaptationLogicFactory::Create(libdash::framework::adaptation::Manual, this->mpd, this->period, this->audioAdaptationSet);
+    this->audioLogic = AdaptationLogicFactory::Create(sampleplayer::managers::AUDIO, libdash::framework::adaptation::Auto, this->mpd, this->period, this->audioAdaptationSet);
 
     this->audioStream = new MultimediaStream(sampleplayer::managers::AUDIO, this->mpd, SEGMENTBUFFER_SIZE, 0, 10);
     this->audioStream->AttachStreamObserver(this);
     this->audioStream->SetRepresentation(this->period, this->audioAdaptationSet, this->audioRepresentation);
     this->audioStream->SetPosition(offset);
 }
-void    MultimediaManager::OnSegmentDownloaded              ()
+void    MultimediaManager::OnSegmentDownloaded              (StreamType type, double current_bandwidth)
 {
     this->segmentsDownloaded++;
+    
+    estimate_bandwidth.push_back(current_bandwidth);
+    
+    switch (type)
+    {
+        case AUDIO:
+            EnterCriticalSection(&this->monitorMutex);
+            this->audioLogic->EstimateBandwidth(estimate_bandwidth);
+            this->audioLogic->DoLogic();
+            LeaveCriticalSection(&this->monitorMutex);
+            this->SetAudioQuality(this->period, this->audioLogic->GetAdaptationSet(), this->audioLogic->GetRepresentation());
+            break;
+        case VIDEO:
+            EnterCriticalSection(&this->monitorMutex);
+            this->videoLogic->EstimateBandwidth(estimate_bandwidth);
+            this->videoLogic->DoLogic();
+            LeaveCriticalSection(&this->monitorMutex);
+            this->SetVideoQuality(this->period, this->videoLogic->GetAdaptationSet(), this->videoLogic->GetRepresentation());
+            break;
+        default:
+            break;
+    }
 }
 void    MultimediaManager::OnSegmentBufferStateChanged    (StreamType type, uint32_t fillstateInPercent)
 {

@@ -12,14 +12,32 @@
 #include "AbstractAdaptationLogic.h"
 
 using namespace libdash::framework::adaptation;
+using namespace libdash::framework::mpd;
+using namespace sampleplayer::managers;
 using namespace dash::mpd;
 
-AbstractAdaptationLogic::AbstractAdaptationLogic    (dash::mpd::IMPD *mpd, dash::mpd::IPeriod *period, dash::mpd::IAdaptationSet *adaptationSet) :
+AbstractAdaptationLogic::AbstractAdaptationLogic    (StreamType type, dash::mpd::IMPD *mpd, dash::mpd::IPeriod *period, dash::mpd::IAdaptationSet *adaptationSet) :
+                         streamType                 (type),
                          mpd                        (mpd),
                          period                     (period),
                          adaptationSet              (adaptationSet),
                          representation             (NULL)
 {
+    this->Periods                                       = this->mpd->GetPeriods();
+    IPeriod *                       currentPeriod       = Periods.at(0);
+    switch(type)
+    {
+        case AUDIO:
+            this->AdaptationSets = AdaptationSetHelper::GetAudioAdaptationSets(currentPeriod);
+            break;
+        case VIDEO:
+            this->AdaptationSets = AdaptationSetHelper::GetVideoAdaptationSets(currentPeriod);
+            break;
+        default:
+            break;
+    }
+    this->adaptationSet   = this->AdaptationSets.at(0);
+    this->Representations = this->adaptationSet->GetRepresentation();
 }
 AbstractAdaptationLogic::~AbstractAdaptationLogic   ()
 {
@@ -33,6 +51,10 @@ void                AbstractAdaptationLogic::SetPosition        (uint32_t segmen
 {
     this->segmentNumber = segmentNumber;
 }
+IAdaptationSet*     AbstractAdaptationLogic::GetAdaptationSet   ()
+{
+    return this->adaptationSet;
+}
 IRepresentation*    AbstractAdaptationLogic::GetRepresentation  ()
 {
     return this->representation;
@@ -42,4 +64,12 @@ void                AbstractAdaptationLogic::SetRepresentation  (IPeriod *period
     this->period            = period;
     this->adaptationSet     = adaptationSet;
     this->representation    = representation;
+}
+double              AbstractAdaptationLogic::EstimateBandwidth  (std::vector<double> &bandwidthVector)
+{
+    this->estimateBandwidth = bandwidthVector.back();
+    return this->estimateBandwidth;
+}
+void                AbstractAdaptationLogic::DoLogic            ()
+{
 }

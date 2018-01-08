@@ -24,10 +24,11 @@ namespace libdash
             class AlwaysLowestLogic : public AbstractAdaptationLogic
             {
                 public:
-                    AlwaysLowestLogic           (dash::mpd::IMPD *mpd, dash::mpd::IPeriod *period, dash::mpd::IAdaptationSet *adaptationSet);
+                    AlwaysLowestLogic           (sampleplayer::managers::StreamType type, dash::mpd::IMPD *mpd, dash::mpd::IPeriod *period, dash::mpd::IAdaptationSet *adaptationSet);
                     virtual ~AlwaysLowestLogic  ();
 
-                    virtual LogicType   GetType ();
+                    virtual LogicType                   GetType             ();
+                    virtual void                        DoLogic             ();
 
                 private:
 

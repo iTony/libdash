@@ -10,6 +10,10 @@
  *****************************************************************************/
 
 #include "DASHReceiver.h"
+extern "C"
+{
+#include <libavutil/time.h>
+}
 
 using namespace libdash::framework::input;
 using namespace libdash::framework::buffer;
@@ -203,9 +207,9 @@ uint32_t                    DASHReceiver::CalculateSegmentOffset    ()
 
     return (startSegNum > firstSegNum) ? startSegNum : firstSegNum;
 }
-void                        DASHReceiver::NotifySegmentDownloaded   ()
+void                        DASHReceiver::NotifySegmentDownloaded   (double current_bandwidth)
 {
-    this->observer->OnSegmentDownloaded();
+    this->observer->OnSegmentDownloaded(current_bandwidth);
 }
 void                        DASHReceiver::DownloadInitSegment    (IRepresentation* rep)
 {
@@ -237,17 +241,48 @@ void*                       DASHReceiver::DoBuffering               (void *recei
     dashReceiver->DownloadInitSegment(dashReceiver->GetRepresentation());
 
     MediaObject *media = dashReceiver->GetNextSegment();
+    
+#if 1  //by li
+    uint64_t start_time = 0;
+    uint64_t end_time = 0;
+    uint64_t download_time = 0;
+    double current_bandwidth = 0;
+#endif
 
     while(media != NULL && dashReceiver->isBuffering)
     {
+#if 1
+        start_time = av_gettime_relative();
+#endif
         media->StartDownload();
-
+        
+        media->WaitFinished();
+#if 1
+        end_time = av_gettime_relative();
+        download_time = end_time - start_time;
+        if (download_time == 0)
+        {
+            download_time = 100000;
+        }
+        current_bandwidth = double(media->GetBytesDownloaded()) / double(download_time) * 8;
+#if 0  //by li
+        FILE *fp;
+        fp = fopen("D://log_bandwidth.txt", "at+");
+        if (fp != NULL)
+        {
+            fprintf(fp, "%9.1lf(kbps) \t\t %9u(bytes) \t\t", current_bandwidth, media->GetBytesDownloaded());
+            fprintf(fp, "%6u(ms) \n", download_time);
+        }
+        fclose(fp);
+#endif
+#endif
+        //li: segment下载完成后再添加到buffer。
         if (!dashReceiver->buffer->PushBack(media))
             return NULL;
 
-        media->WaitFinished();
+        //media->WaitFinished();
 
-        dashReceiver->NotifySegmentDownloaded();
+        dashReceiver->NotifySegmentDownloaded(current_bandwidth);
 
         media = dashReceiver->GetNextSegment();
     }

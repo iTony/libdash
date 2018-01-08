@@ -15,8 +15,8 @@ using namespace libdash::framework::adaptation;
 using namespace libdash::framework::input;
 using namespace dash::mpd;
 
-AlwaysLowestLogic::AlwaysLowestLogic        (IMPD *mpd, IPeriod *period, IAdaptationSet *adaptationSet) :
-                   AbstractAdaptationLogic  (mpd, period, adaptationSet)
+AlwaysLowestLogic::AlwaysLowestLogic        (sampleplayer::managers::StreamType type, IMPD *mpd, IPeriod *period, IAdaptationSet *adaptationSet) :
+                   AbstractAdaptationLogic  (type, mpd, period, adaptationSet)
 {
     this->representation = this->adaptationSet->GetRepresentation().at(0);
 }
@@ -24,7 +24,14 @@ AlwaysLowestLogic::~AlwaysLowestLogic   ()
 {
 }
 
-LogicType       AlwaysLowestLogic::GetType      ()
+LogicType       AlwaysLowestLogic::GetType                  ()
 {
     return adaptation::AlwaysLowest;
+}
+
+void            AlwaysLowestLogic::DoLogic            ()
+{
+    this->adaptationSet     = this->AdaptationSets.at(0);
+    this->Representations   = this->adaptationSet->GetRepresentation();
+    this->representation    = this->Representations.at(0);
 }

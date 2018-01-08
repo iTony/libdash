@@ -9,22 +9,31 @@
  * and conditions of the applicable license agreement.
  *****************************************************************************/
 
-#include "ManualAdaptation.h"
+#include "AutoAdaptation.h"
 
 using namespace dash::mpd;
 using namespace libdash::framework::adaptation;
 using namespace libdash::framework::input;
 using namespace libdash::framework::mpd;
 
-ManualAdaptation::ManualAdaptation          (sampleplayer::managers::StreamType type, IMPD *mpd, IPeriod *period, IAdaptationSet *adaptationSet) :
+AutoAdaptation::AutoAdaptation              (sampleplayer::managers::StreamType type, IMPD *mpd, IPeriod *period, IAdaptationSet *adaptationSet) :
                   AbstractAdaptationLogic   (type, mpd, period, adaptationSet)
 {
 }
-ManualAdaptation::~ManualAdaptation         ()
+AutoAdaptation::~AutoAdaptation         ()
 {
 }
 
-LogicType       ManualAdaptation::GetType               ()
+LogicType       AutoAdaptation::GetType                ()
 {
     return adaptation::Manual;
+}
+double          AutoAdaptation::EstimateBandwidth      (std::vector<double> &bandwidthVector)
+{
+    this->estimateBandwidth = bandwidthVector.back();
+    return this->estimateBandwidth;
+}
+void            AutoAdaptation::DoLogic                ()
+{
+    // add logic here.
 }
